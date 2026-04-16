@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SW Unit Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0d; --s1: #141414; --s2: #1a1a1a; --s3: #202020;
+  --border: #2c2c2c; --text: #efefef; --muted: #5a5a5a; --subtle: #3a3a3a;
+  --green: #00e676; --gdim: rgba(0,230,118,0.09);
+  --amber: #ffab00; --adim: rgba(255,171,0,0.09);
+  --red: #ff5252; --rdim: rgba(255,82,82,0.09);
+  --blue: #448aff; --bdim: rgba(68,138,255,0.09);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;padding:2rem 1.25rem 5rem;}
+.page{max-width:1080px;margin:0 auto;}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:1.25rem;border-bottom:1px solid var(--border);margin-bottom:2rem;flex-wrap:wrap;gap:.75rem;}
+.hdr-title{font-family:'DM Mono',monospace;font-size:.95rem;font-weight:500;letter-spacing:-.01em;}
+.badge{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--green);background:var(--gdim);border:1px solid rgba(0,230,118,.18);padding:2px 8px;border-radius:2px;}
+
+/* THREE COLUMNS */
+.cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;}
+@media(max-width:780px){.cols{grid-template-columns:1fr;}}
+
+.col{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:1.25rem;display:flex;flex-direction:column;gap:1rem;}
+.col-last{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:1.25rem;}
+
+.col-label{font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:.1rem;}
+
+/* NUMBER INPUTS */
+.field{display:flex;flex-direction:column;gap:.3rem;}
+.field label{font-size:.72rem;color:var(--muted);}
+.field input[type=number]{
+  background:var(--s2);border:1px solid var(--border);border-radius:6px;
+  color:var(--text);font-family:'DM Mono',monospace;font-size:1.15rem;font-weight:500;
+  padding:.55rem .75rem;width:100%;outline:none;transition:border-color .2s;
+  -moz-appearance:textfield;
+}
+.field input[type=number]::-webkit-outer-spin-button,
+.field input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+.field input[type=number]:focus{border-color:var(--blue);}
+
+/* SLIDERS */
+.sfield{display:flex;flex-direction:column;gap:.3rem;}
+.sfield-top{display:flex;justify-content:space-between;align-items:baseline;}
+.sfield-name{font-size:.72rem;color:var(--muted);}
+.sfield-val{font-family:'DM Mono',monospace;font-size:.9rem;font-weight:500;}
+input[type=range]{width:100%;-webkit-appearance:none;height:2px;background:var(--subtle);border-radius:2px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--text);cursor:pointer;transition:transform .15s;}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.3);}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:.25rem 0;}
+
+/* DIFF ROWS */
+.diff-row{display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);}
+.diff-row:last-child{border-bottom:none;}
+.diff-name{font-size:.75rem;color:var(--muted);}
+.diff-right{display:flex;align-items:center;gap:.6rem;}
+.diff-pct{font-family:'DM Mono',monospace;font-size:.85rem;font-weight:500;}
+.diff-dir{font-family:'DM Mono',monospace;font-size:.65rem;padding:1px 6px;border-radius:2px;}
+.up{color:var(--green);background:var(--gdim);}
+.dn{color:var(--red);background:var(--rdim);}
+.eq{color:var(--muted);}
+
+/* BIG RESULT */
+.result-block{text-align:center;padding:1rem 0 .5rem;}
+.result-num{font-family:'DM Mono',monospace;font-size:clamp(2.8rem,7vw,4.5rem);font-weight:400;letter-spacing:-.04em;line-height:1;transition:color .3s;}
+.result-sub{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:.35rem;}
+.progress{height:3px;background:var(--border);border-radius:2px;margin:.85rem 0 .35rem;overflow:hidden;}
+.progress-fill{height:100%;border-radius:2px;transition:width .4s,background .3s;}
+.progress-label{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);}
+
+/* SUMMARY GRID */
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1.25rem;}
+.sum-card{background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:.85rem .9rem;}
+.sum-val{font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500;}
+.sum-label{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px;}
+
+/* VERDICT */
+.verdict{margin-top:1.25rem;padding:.9rem 1.1rem;border-radius:6px;font-size:.8rem;line-height:1.65;border-left:3px solid;transition:all .3s;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hdr">
+    <span class="hdr-title">SW Unit Calculator</span>
+    <span class="badge">Southwestern Advantage</span>
+  </div>
+
+  <div class="cols">
+
+    <!-- COL 1: LAST YEAR -->
+    <div class="col">
+      <div class="col-label">Last summer — actual</div>
+
+      <div class="field"><label>Working days</label>
+        <input type="number" id="l-days" value="71" min="1" max="130"></div>
+      <div class="field"><label>Sit-downs per day</label>
+        <input type="number" id="l-sds" value="9.4" min="1" max="20" step="0.1"></div>
+      <div class="field"><label>Closing %</label>
+        <input type="number" id="l-cls" value="29" min="1" max="80"></div>
+      <div class="field"><label>Avg package (units)</label>
+        <input type="number" id="l-pkg" value="22.5" min="1" max="60" step="0.5"></div>
+
+      <div class="divider"></div>
+
+      <div class="sum-card" style="background:var(--s2);">
+        <div class="sum-val" id="l-total">—</div>
+        <div class="sum-label">units last summer</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;">
+        <div class="sum-card">
+          <div class="sum-val" id="l-upd">—</div>
+          <div class="sum-label">units / day</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-val" id="l-upw">—</div>
+          <div class="sum-label">units / week</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 2: NEXT YEAR TARGET -->
+    <div class="col">
+      <div class="col-label">Next summer — target</div>
+
+      <div class="sfield">
+        <div class="sfield-top"><span class="sfield-name">Working days</span><span class="sfield-val" id="v-days">75</span></div>
+        <input type="range" id="s-days" min="60" max="110" value="75" step="1">
+      </div>
+      <div class="sfield">
+        <div class="sfield-top"><span class="sfield-name">Sit-downs per day</span><span class="sfield-val" id="v-sds">10</span></div>
+        <input type="range" id="s-sds" min="5" max="18" value="10" step="0.5">
+      </div>
+      <div class="sfield">
+        <div class="sfield-top"><span class="sfield-name">Closing %</span><span class="sfield-val" id="v-cls">38%</span></div>
+        <input type="range" id="s-cls" min="15" max="65" value="38" step="1">
+      </div>
+      <div class="sfield">
+        <div class="sfield-top"><span class="sfield-name">Avg package (units)</span><span class="sfield-val" id="v-pkg">27</span></div>
+        <input type="range" id="s-pkg" min="10" max="55" value="27" step="0.5">
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field"><label>Your goal (units)</label>
+        <input type="number" id="l-goal" value="12000" min="500" max="50000" step="500"></div>
+
+      <div class="sum-card" style="background:var(--s2);">
+        <div class="sum-val" id="n-total" style="color:var(--green)">—</div>
+        <div class="sum-label">units projected</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;">
+        <div class="sum-card">
+          <div class="sum-val" id="n-upd">—</div>
+          <div class="sum-label">units / day</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-val" id="n-upw" style="color:var(--green)">—</div>
+          <div class="sum-label">units / week</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 3: GROWTH NEEDED -->
+    <div class="col">
+      <div class="col-label">Growth needed — %</div>
+
+      <div class="diff-row">
+        <span class="diff-name">Working days</span>
+        <div class="diff-right">
+          <span class="diff-pct" id="d-days-abs">—</span>
+          <span class="diff-dir" id="d-days-pct">—</span>
+        </div>
+      </div>
+      <div class="diff-row">
+        <span class="diff-name">Sit-downs / day</span>
+        <div class="diff-right">
+          <span class="diff-pct" id="d-sds-abs">—</span>
+          <span class="diff-dir" id="d-sds-pct">—</span>
+        </div>
+      </div>
+      <div class="diff-row">
+        <span class="diff-name">Closing %</span>
+        <div class="diff-right">
+          <span class="diff-pct" id="d-cls-abs">—</span>
+          <span class="diff-dir" id="d-cls-pct">—</span>
+        </div>
+      </div>
+      <div class="diff-row">
+        <span class="diff-name">Avg package</span>
+        <div class="diff-right">
+          <span class="diff-pct" id="d-pkg-abs">—</span>
+          <span class="diff-dir" id="d-pkg-pct">—</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="diff-row" style="border-bottom:none;">
+        <span class="diff-name">Total units</span>
+        <div class="diff-right">
+          <span class="diff-pct" id="d-units-abs" style="font-size:1rem;">—</span>
+          <span class="diff-dir" id="d-units-pct">—</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- PROGRESS -->
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;">
+          <span style="font-size:.72rem;color:var(--muted);">Progress to goal</span>
+          <span style="font-family:'DM Mono',monospace;font-size:.72rem;" id="pct-goal">0%</span>
+        </div>
+        <div class="progress"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+        <div class="progress-label"><span id="goal-display">12,000</span> unit goal</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- LEVER RANKING -->
+      <div>
+        <div class="col-label" style="margin-bottom:.6rem;">Biggest lever</div>
+        <div id="lever-box" style="font-size:.78rem;color:var(--muted);line-height:1.7;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="verdict" id="verdict"></div>
+
+</div>
+<script>
+function r(v,d=1){return Math.round(v*Math.pow(10,d))/Math.pow(10,d);}
+function fmt(v){return v>=1000?v.toLocaleString():v;}
+
+function diffBadge(absId,pctId,newVal,oldVal,suffix=''){
+  const absEl=document.getElementById(absId);
+  const pctEl=document.getElementById(pctId);
+  const diff=r(newVal-oldVal,1);
+  const pct=oldVal!==0?Math.round((newVal-oldVal)/oldVal*100):0;
+  absEl.textContent=(diff>0?'+':'')+diff+suffix;
+  pctEl.textContent=(pct>0?'+':'')+pct+'%';
+  pctEl.className='diff-dir '+(diff>0?'up':diff<0?'dn':'eq');
+}
+
+function calc(){
+  const lDays=parseFloat(document.getElementById('l-days').value)||71;
+  const lSds =parseFloat(document.getElementById('l-sds').value)||9.4;
+  const lCls =parseFloat(document.getElementById('l-cls').value)||29;
+  const lPkg =parseFloat(document.getElementById('l-pkg').value)||22.5;
+  const goal =parseFloat(document.getElementById('l-goal').value)||12000;
+
+  const nDays=+document.getElementById('s-days').value;
+  const nSds =+document.getElementById('s-sds').value;
+  const nCls =+document.getElementById('s-cls').value;
+  const nPkg =+document.getElementById('s-pkg').value;
+
+  document.getElementById('v-days').textContent=nDays;
+  document.getElementById('v-sds').textContent=nSds;
+  document.getElementById('v-cls').textContent=nCls+'%';
+  document.getElementById('v-pkg').textContent=nPkg;
+
+  const lUnits=Math.round(lDays*lSds*(lCls/100)*lPkg);
+  const nUnits=Math.round(nDays*nSds*(nCls/100)*nPkg);
+  const lUpd=Math.round(lUnits/lDays);
+  const lUpw=Math.round(lUnits/(lDays/6));
+  const nUpd=Math.round(nUnits/nDays);
+  const nUpw=Math.round(nUnits/(nDays/6));
+
+  document.getElementById('l-total').textContent=fmt(lUnits);
+  document.getElementById('l-upd').textContent=lUpd;
+  document.getElementById('l-upw').textContent=fmt(lUpw);
+  document.getElementById('n-total').textContent=fmt(nUnits);
+  document.getElementById('n-upd').textContent=nUpd;
+  document.getElementById('n-upw').textContent=fmt(nUpw);
+
+  diffBadge('d-days-abs','d-days-pct',nDays,lDays,' days');
+  diffBadge('d-sds-abs','d-sds-pct',nSds,lSds,' SDs');
+  diffBadge('d-cls-abs','d-cls-pct',nCls,lCls,'%');
+  diffBadge('d-pkg-abs','d-pkg-pct',nPkg,lPkg,' u');
+
+  const uDiff=nUnits-lUnits;
+  const uPct=lUnits>0?Math.round(uDiff/lUnits*100):0;
+  const uEl=document.getElementById('d-units-abs');
+  const uPEl=document.getElementById('d-units-pct');
+  uEl.textContent=(uDiff>0?'+':'')+fmt(uDiff)+' u';
+  uPEl.textContent=(uPct>0?'+':'')+uPct+'%';
+  uPEl.className='diff-dir '+(uDiff>0?'up':uDiff<0?'dn':'eq');
+
+  const pct=Math.min(100,nUnits/goal*100);
+  document.getElementById('pct-goal').textContent=Math.round(pct)+'%';
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('goal-display').textContent=goal.toLocaleString();
+  const pf=document.getElementById('prog-fill');
+  if(nUnits>=goal)pf.style.background='#00e676';
+  else if(pct>=75)pf.style.background='#ffab00';
+  else pf.style.background='#448aff';
+
+  const nTotEl=document.getElementById('n-total');
+  if(nUnits>=goal)nTotEl.style.color='#00e676';
+  else if(pct>=75)nTotEl.style.color='#ffab00';
+  else nTotEl.style.color='#efefef';
+
+  // Lever ranking
+  const levers=[
+    {name:'Closing %',   impact:Math.round(nDays*nSds*(1/100)*nPkg), change:Math.abs(nCls-lCls)},
+    {name:'Avg package', impact:Math.round(nDays*nSds*(nCls/100)*1), change:Math.abs(nPkg-lPkg)},
+    {name:'SDs / day',   impact:Math.round(nDays*1*(nCls/100)*nPkg), change:Math.abs(nSds-lSds)},
+    {name:'Working days',impact:Math.round(1*nSds*(nCls/100)*nPkg),  change:Math.abs(nDays-lDays)},
+  ].sort((a,b)=>b.impact-a.impact);
+  document.getElementById('lever-box').innerHTML=levers.map((l,i)=>
+    `<div style="display:flex;justify-content:space-between;padding:.15rem 0;">
+      <span style="color:${i===0?'var(--green)':'var(--muted)'}">${i===0?'▶ ':'   '}${l.name}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:.72rem;color:${i===0?'var(--green)':'var(--muted)'}">+1 unit = +${fmt(l.impact)} units</span>
+    </div>`
+  ).join('');
+
+  // Verdict
+  const v=document.getElementById('verdict');
+  const missing=goal-nUnits;
+  const perPct=Math.round(nDays*nSds*nPkg/100);
+  if(nUnits>=goal){
+    v.style.cssText='border-color:#00e676;background:rgba(0,230,118,.06);color:#00e676;';
+    v.textContent=`Goal reached! ${fmt(nUpw)} units/week — ${fmt(nUpd)} units/day. You need ${nCls}% closing × ${nSds} SDs/day × ${nPkg} avg package × ${nDays} days.`;
+  } else {
+    v.style.cssText='border-color:#ffab00;background:rgba(255,171,0,.06);color:#ffab00;';
+    v.textContent=`${fmt(missing)} units short of goal (${Math.round(pct)}% there). To hit ${goal.toLocaleString()}: biggest lever is closing % — every +1% closing = ~${fmt(perPct)} extra units.`;
+  }
+}
+
+['l-days','l-sds','l-cls','l-pkg','l-goal'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
+['s-days','s-sds','s-cls','s-pkg'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
+calc();
+</script>
+</body>
+</html>
